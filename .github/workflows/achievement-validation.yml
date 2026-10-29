@@ -16,13 +16,13 @@ jobs:
       - name: Check out the requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          ref: 160587ae7baefc55dd52ad26b5944a6672be2627
           fetch-depth: 0
           persist-credentials: false
 
       - name: Confirm commit and record environment
         env:
-          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          EXPECTED_SHA: 160587ae7baefc55dd52ad26b5944a6672be2627
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
@@ -67,13 +67,13 @@ jobs:
       - name: Check out the requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          ref: 160587ae7baefc55dd52ad26b5944a6672be2627
           fetch-depth: 0
           persist-credentials: false
 
       - name: Confirm commit
         env:
-          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          EXPECTED_SHA: 160587ae7baefc55dd52ad26b5944a6672be2627
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Set up Python 3.14
@@ -106,13 +106,13 @@ jobs:
       - name: Check out the requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          ref: 160587ae7baefc55dd52ad26b5944a6672be2627
           fetch-depth: 0
           persist-credentials: false
 
       - name: Confirm commit
         env:
-          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          EXPECTED_SHA: 160587ae7baefc55dd52ad26b5944a6672be2627
         run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
 
       - name: Set up Python 3.11
@@ -145,13 +145,13 @@ jobs:
       - name: Check out the requested commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          ref: 160587ae7baefc55dd52ad26b5944a6672be2627
           fetch-depth: 0
           persist-credentials: false
 
       - name: Confirm commit and set the comparison base
         env:
-          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          EXPECTED_SHA: 160587ae7baefc55dd52ad26b5944a6672be2627
           BASE_SHA: dc7dbaf93684b7b4afd2f653d37238f35d0db09b
         run: |
           set -euo pipefail
