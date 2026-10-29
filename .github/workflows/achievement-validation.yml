@@ -1,0 +1,182 @@
+name: OTel Python Linux validation
+
+on:
+  push:
+    branches: [validation/metric-start-timestamps-5848]
+
+permissions:
+  contents: read
+
+jobs:
+  sdk-tests:
+    name: SDK tests (Python 3.12, Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the requested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm commit and record environment
+        env:
+          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          mkdir -p artifacts
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Record environment
+        run: |
+          {
+            git rev-parse HEAD
+            python --version
+            uv --version
+          } > artifacts/environment.txt
+
+      - name: Run full SDK tests, including Linux-only time alignment tests
+        run: |
+          set -o pipefail
+          uvx --with tox-uv tox -e py312-test-opentelemetry-sdk -- \
+            -ra --junitxml=artifacts/sdk-tests.xml 2>&1 | tee artifacts/sdk-tests.log
+
+      - name: Retain test output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sdk-tests-${{ github.run_id }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+  sdk-lint:
+    name: SDK lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the requested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm commit
+        env:
+          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Run SDK lint
+        run: |
+          set -o pipefail
+          uvx --with tox-uv tox -e lint-opentelemetry-sdk 2>&1 | tee sdk-lint.log
+
+      - name: Retain lint output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sdk-lint-${{ github.run_id }}
+          path: sdk-lint.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  typecheck:
+    name: Repository typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the requested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm commit
+        env:
+          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Run repository typecheck
+        run: |
+          set -o pipefail
+          uvx --with tox-uv tox -e typecheck 2>&1 | tee typecheck.log
+
+      - name: Retain typecheck output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: typecheck-${{ github.run_id }}
+          path: typecheck.log
+          if-no-files-found: warn
+          retention-days: 14
+
+  public-symbols:
+    name: Public API symbol check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out the requested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Confirm commit and set the comparison base
+        env:
+          EXPECTED_SHA: 92f255c42a4f8703d1a3076dd82483c2185d83c2
+          BASE_SHA: dc7dbaf93684b7b4afd2f653d37238f35d0db09b
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git cat-file -e "${BASE_SHA}^{commit}"
+          git update-ref refs/heads/main "$BASE_SHA"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+
+      - name: Run public symbol check
+        run: |
+          set -o pipefail
+          uvx --with tox-uv tox -e public-symbols-check 2>&1 | tee public-symbols.log
+
+      - name: Retain symbol-check output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: public-symbols-${{ github.run_id }}
+          path: public-symbols.log
+          if-no-files-found: warn
+          retention-days: 14
