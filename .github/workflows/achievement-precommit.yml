@@ -1,0 +1,43 @@
+name: OTel PR 5859 pre-commit validation
+
+on:
+  push:
+    branches: [validation/precommit-5859]
+
+permissions:
+  contents: read
+
+jobs:
+  precommit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the PR commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 188a8c533cab94f3bbd30a27bc03c3cbce2f4265
+          persist-credentials: false
+      - name: Confirm source
+        run: |
+          test "$(git rev-parse HEAD)" = "188a8c533cab94f3bbd30a27bc03c3cbce2f4265"
+          git rev-parse HEAD > environment.txt
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - name: Run all repository pre-commit hooks
+        run: |
+          set -o pipefail
+          uvx --with tox-uv tox -e precommit 2>&1 | tee precommit.log
+          git diff --exit-code
+      - name: Preserve output
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: precommit-5859-${{ github.run_id }}
+          path: |
+            environment.txt
+            precommit.log
+          retention-days: 14
