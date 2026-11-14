@@ -114,8 +114,15 @@ def test_decode_int64(value: int | str | None, expected: int) -> None:
 
 
 def test_decode_int64_errors() -> None:
+    bad_list: Any = []
+    bad_true: Any = True
+    bad_false: Any = False
     with pytest.raises(TypeError):
-        decode_int64([], "field")  # type: ignore
+        decode_int64(bad_list, "field")
+    with pytest.raises(TypeError, match="got bool"):
+        decode_int64(bad_true, "field")
+    with pytest.raises(TypeError, match="got bool"):
+        decode_int64(bad_false, "field")
     with pytest.raises(ValueError, match="Invalid int64 value"):
         decode_int64("abc", "field")
 
@@ -158,8 +165,15 @@ def test_decode_float(value: float | str | None, expected: float) -> None:
 
 
 def test_decode_float_errors() -> None:
+    bad_list: Any = []
+    bad_true: Any = True
+    bad_false: Any = False
     with pytest.raises(TypeError):
-        decode_float([], "field")  # type: ignore
+        decode_float(bad_list, "field")
+    with pytest.raises(TypeError, match="got bool"):
+        decode_float(bad_true, "field")
+    with pytest.raises(TypeError, match="got bool"):
+        decode_float(bad_false, "field")
     with pytest.raises(ValueError, match="Invalid float value"):
         decode_float("abc", "field")
 
@@ -183,11 +197,28 @@ def test_decode_repeated_errors() -> None:
 def test_validate_type() -> None:
     validate_type("s", str, "field")
     validate_type(1, int, "field")
+    validate_type(True, bool, "field")
+    validate_type(False, (bool, str), "field")
     validate_type(1, (int, str), "field")
     validate_type("s", (int, str), "field")
 
     with pytest.raises(TypeError, match="Field 'field' expected <class 'int'>, got str"):
         validate_type("s", int, "field")
+
+    with pytest.raises(TypeError, match="Field 'field' expected <class 'int'>, got bool"):
+        validate_type(True, int, "field")
+
+    with pytest.raises(
+        TypeError,
+        match=r"Field 'field' expected \(<class 'int'>, <class 'str'>\), got bool",
+    ):
+        validate_type(False, (int, str), "field")
+
+    with pytest.raises(
+        TypeError,
+        match=r"Field 'field' expected \(<class 'float'>, <class 'int'>, <class 'str'>\), got bool",
+    ):
+        validate_type(True, (float, int, str), "field")
 
     with pytest.raises(
         TypeError,
